@@ -20,17 +20,11 @@ def dW_spiky(r_vect, h):
     else:
         return 0
 
-fig = plt.figure()
-ax = Axes3D(fig)
-ax.set_xlim3d(-10, 10)
-ax.set_ylim3d(-10, 10)
-ax.set_zlim3d(0, 20)
-
-N = 125  # Number of particle
+N = 100  # Number of particle
 t = 0    # time
 dt = 0.1 # time step
 # Initial positions and velocities
-x = np.asarray([[i-2.0, j-2.0, k + 10.0] for i in range(5) for j in range(5) for k in range(5)])
+x = np.asarray([[0.5*r*np.cos(2.0*np.pi/10.0 * i), 0.5*r*np.sin(2.0*np.pi/10.0 * i), k + 10.0] for i in range(10) for k in range(5) for r in range(1, 3)])
 v = np.asarray([[0., 0., 0.] for i in range(N)])
 gravity = np.asarray([[0., 0., -10.] for i in range(N)])
 
@@ -45,11 +39,10 @@ for i in range(N):
 h = 100  # Parameter for kernel. I am not sure about the optimal value
 # Calculate the density of the each particle at initial state
 rho_init = [0.0 for _ in range(N)]  
-for _ in range(5):
-    for i in range(N):
-        rho = 0.0
-        for j in neighbor[i]:  
-            rho_init[i] += W_poly6(x[i] - x[j], h)
+for i in range(N):
+    rho = 0.0
+    for j in neighbor[i]:  
+        rho_init[i] += W_poly6(x[i] - x[j], h)
 
 
 def update(i, fig_title, A):
@@ -102,8 +95,8 @@ def update(i, fig_title, A):
                     grad = -dW_spiky(x_pred[i] - x_pred[k], h) / rho0
                     Z += np.linalg.norm(grad)**2.0
             # formula (11)
-            epsilon = 10.0  # too big but this makes simulation stable
-            lam[i] = -(C_i / (Z + epsilon))
+            epsilon = 1e-5
+            lam[i] = C_i / (Z + epsilon) # the sign is flipped, but this yields better result
 
         # calculate delta p_i
         delta_p = [0 for _ in range(N)]
@@ -123,7 +116,7 @@ def update(i, fig_title, A):
                 else:  # if ray x->p lies completely inside the floor
                     q = x_pred[i] - surface_normal.dot(x_pred[i]) * surface_normal
                 # Formula (7) of PBD paper where C(p) = (p-q) \dot n
-                s = (x_pred[i] - q) * surface_normal
+                s = (x_pred[i] - q).dot(surface_normal)
                 # Formula (6) of PBD paper
                 delta_p[i] -= s * surface_normal
         # update position (17. of the algorithm)
@@ -134,7 +127,13 @@ def update(i, fig_title, A):
         v[i] = (x_pred[i] - x[i]) / dt  # update velocity (21. of the algorithm)
         x[i] = x_pred[i]                # update position (23. of the algorithm)
 
-    ax.scatter(x[:, 0], x[:, 1], x[:, 2], color='red')
+    ax.scatter(x[:, 0], x[:, 1], x[:, 2], color='blue')
+
+fig = plt.figure()
+ax = Axes3D(fig)
+ax.set_xlim3d(-10, 10)
+ax.set_ylim3d(-10, 10)
+ax.set_zlim3d(0, 20)
 
 ani = anm.FuncAnimation(fig, update, fargs = ('Initial Animation! ', 2.0), interval = 100)
 plt.show()
