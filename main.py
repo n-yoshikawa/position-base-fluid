@@ -31,22 +31,24 @@ gravity = np.asarray([[0., 0., -10.] for i in range(N)])
 # Calculate initial density
 # find neighboring particles
 # Counting 8 neighbors is standard acoording to the prof
-neighbor = []
-for i in range(N):
-    distance = np.asarray([np.linalg.norm(x[i] - x[j]) for j in range(N)])
-    neighbor.append(list(distance.argsort()[:8]))
+NUM_NEIGHBOR=8
+
+## vectorized implementation of finding nearest neighbours
+x_3D = x[:, np.newaxis]
+distance = np.sum((x_3D - x)**2, axis=2)
+neighbor = np.argsort(distance, axis=-1)[:,:NUM_NEIGHBOR]
 
 h = 100  # Parameter for kernel. I am not sure about the optimal value
 # Calculate the density of the each particle at initial state
+# ***POTENTIALLY REVISE *** I think this should just be density of water - Marta
 rho_init = [0.0 for _ in range(N)]  
 for i in range(N):
     rho = 0.0
     for j in neighbor[i]:  
         rho_init[i] += W_poly6(x[i] - x[j], h)
 
-
 def update(i, fig_title, A):
-    global t, x, v, gravity
+    global t, x, v, gravity, NUM_NEIGHBOR
     if i != 0:
         ax.cla()
     ax.set_xlim3d(-10, 10)
@@ -58,18 +60,18 @@ def update(i, fig_title, A):
     # The only force is gravity
     force = gravity
 
-    # apply forces
+    # (2. of Algorithm 1 )apply forces
     v += dt * force
 
-    # predict position
+    # (3. of Algorithm 1) predict position
     x_pred = x + dt * v
 
-    # find neighboring particles (should be optimized later)
-    neighbor = []
-    for i in range(N):
-        distance = np.asarray([np.linalg.norm(x_pred[i] - x_pred[j]) for j in range(N)])
-        neighbor.append(list(distance.argsort()[:8]))
-
+    # (6. of Algorithm 1) find neighboring particles (should be optimized later)
+    # updated with vectorized implementation
+    x_pred_3D = x_pred[:, np.newaxis]
+    distance = np.sum((x_pred_3D - x_pred)**2, axis=2)
+    neighbor = np.argsort(distance, axis=-1)[:,:NUM_NEIGHBOR]
+    
     # the simulation loop (Algorithm 1)
     for _ in range(5):
         # calculate lambda_i
@@ -125,6 +127,10 @@ def update(i, fig_title, A):
 
     for i in range(N):
         v[i] = (x_pred[i] - x[i]) / dt  # update velocity (21. of the algorithm)
+        ## VORTICITY (22. of the algorithm)
+
+        ## VELOCITY (22. of the algorithm)
+
         x[i] = x_pred[i]                # update position (23. of the algorithm)
 
     ax.scatter(x[:, 0], x[:, 1], x[:, 2], color='blue')
