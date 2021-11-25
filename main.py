@@ -75,6 +75,7 @@ def update(i, fig_title, A):
     # the simulation loop (Algorithm 1)
     for _ in range(5):
         # calculate lambda_i
+        # (10. in Algorithm 1)
         lam = [0 for _ in range(N)]
         for i in range(N):
             rho = 0.0
@@ -92,15 +93,16 @@ def update(i, fig_title, A):
                     for j in neighbor[i]:
                         if i != j: # Exclude i==j to avoid divide by zero (confirmed to the prof)
                             grad += dW_spiky(x_pred[i] - x_pred[j], h) / rho0
-                    Z += np.linalg.norm(grad) ** 2.0
                 else: # if k = j
-                    grad = -dW_spiky(x_pred[i] - x_pred[k], h) / rho0
-                    Z += np.linalg.norm(grad)**2.0
+                    grad = -1 * dW_spiky(x_pred[i] - x_pred[k], h) / rho0
+                
+                Z += np.linalg.norm(grad)**2.0
             # formula (11)
             epsilon = 1e-5
             lam[i] = C_i / (Z + epsilon) # the sign is flipped, but this yields better result
 
         # calculate delta p_i
+        # (13. of Algorithm 1)
         delta_p = [0 for _ in range(N)]
         for i in range(N):
             rho0 = rho_init[i]
@@ -128,7 +130,10 @@ def update(i, fig_title, A):
     for i in range(N):
         v[i] = (x_pred[i] - x[i]) / dt  # update velocity (21. of the algorithm)
         ## VORTICITY (22. of the algorithm)
-
+        omega_i = 0
+        for j in neighbor[i]:
+            omega_i += (v[j] - v[i]) * dW_spiky(x_pred[i] - x_pred[j], h)
+            
         ## VELOCITY (22. of the algorithm)
 
         x[i] = x_pred[i]                # update position (23. of the algorithm)
