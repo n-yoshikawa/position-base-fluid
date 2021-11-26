@@ -23,11 +23,13 @@ def dW_spiky(r_vect, h):
 N = 100  # Number of particle
 t = 0    # time
 dt = 0.1 # time step
+
+
 # Initial positions and velocities
 x = np.asarray([[0.5*r*np.cos(2.0*np.pi/10.0 * i), 0.5*r*np.sin(2.0*np.pi/10.0 * i), k + 10.0] for i in range(10) for k in range(5) for r in range(1, 3)])
 v = np.asarray([[0., 0., 0.] for i in range(N)])
 gravity = np.asarray([[0., 0., -10.] for i in range(N)])
-
+vorticity = np.asarray([[0., 0., 0.] for i in range(N)])
 # Calculate initial density
 # find neighboring particles
 # Counting 8 neighbors is standard acoording to the prof
@@ -48,7 +50,7 @@ for i in range(N):
         rho_init[i] += W_poly6(x[i] - x[j], h)
 
 def update(i, fig_title, A):
-    global t, x, v, gravity, NUM_NEIGHBOR
+    global t, x, v, gravity, vorticity, NUM_NEIGHBOR
     if i != 0:
         ax.cla()
     ax.set_xlim3d(-10, 10)
@@ -57,8 +59,8 @@ def update(i, fig_title, A):
     t += dt
 
     print("t = {:.2}".format(t))
-    # The only force is gravity
-    force = gravity
+    # The only forces are gravity and vorticity
+    force = gravity + vorticity
 
     # (2. of Algorithm 1 )apply forces
     v += dt * force
@@ -129,13 +131,26 @@ def update(i, fig_title, A):
 
     for i in range(N):
         v[i] = (x_pred[i] - x[i]) / dt  # update velocity (21. of the algorithm)
-        ## VORTICITY (22. of the algorithm)
+    for i in range(N):
+   ## VORTICITY (22. of the algorithm)
         omega_i = 0
+        
         for j in neighbor[i]:
-            omega_i += (v[j] - v[i]) * dW_spiky(x_pred[i] - x_pred[j], h)
-            
-        ## VELOCITY (22. of the algorithm)
+            if i != j:
+                omega_i += (v[j] - v[i]) * dW_spiky(x_pred[i] - x_pred[j], h)
+        eta=0
+        for j in neighbor[i]:
+            if i != j:
+                eta += dW_spiky(x_pred[i] - x_pred[j], h) * np.linalg.norm(omega_i)
+        
+        # added small constant in case denominator = 0 (source: https://www.cs.ubc.ca/~rbridson/fluidsimulation/fluids_notes.pdf section 5.1)
+        N_vort = eta / (np.linalg.norm(eta)+10e-20)
+        
+        epsilon_vort = 1e-2
+        vorticity[i] = epsilon*(N_vort * omega_i)
 
+        ## VELOCITY (22. of the algorithm)
+    for i in range(N):
         x[i] = x_pred[i]                # update position (23. of the algorithm)
 
     ax.scatter(x[:, 0], x[:, 1], x[:, 2], color='blue')
