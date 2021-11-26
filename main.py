@@ -149,7 +149,12 @@ def update(i, fig_title, A):
         epsilon_vort = 1e-2
         vorticity[i] = epsilon*(N_vort * omega_i)
 
-        ## VELOCITY (22. of the algorithm)
+        ## VISCOSITY (22. of the algorithm)
+        c = 0.01
+        viscosity = 0
+        for j in neighbor[i]:
+            viscosity += (v[j] - v[i]) * W_poly6(x_pred[i] - x_pred[j], h)
+        v[i] += c * viscosity
     for i in range(N):
         x[i] = x_pred[i]                # update position (23. of the algorithm)
 
