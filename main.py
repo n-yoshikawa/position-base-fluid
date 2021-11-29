@@ -20,13 +20,16 @@ def dW_spiky(r_vect, h):
     else:
         return 0
 
-N = 100  # Number of particle
+N = 100 # Number of particle
 t = 0    # time
 dt = 0.1 # time step
 
 
 # Initial positions and velocities
 x = np.asarray([[0.5*r*np.cos(2.0*np.pi/10.0 * i), 0.5*r*np.sin(2.0*np.pi/10.0 * i), k + 10.0] for i in range(10) for k in range(5) for r in range(1, 3)])
+#x = [ [2/5 * i, 2/5 * j, 1/20 * k + 10] for i in range(5) for j in range(5) for k in range(20)]
+#print(np.cbrt(N))
+x = np.array(x)
 v = np.asarray([[0., 0., 0.] for i in range(N)])
 gravity = np.asarray([[0., 0., -10.] for i in range(N)])
 vorticity = np.asarray([[0., 0., 0.] for i in range(N)])
@@ -53,8 +56,8 @@ def update(i, fig_title, A):
     global t, x, v, gravity, vorticity, NUM_NEIGHBOR
     if i != 0:
         ax.cla()
-    ax.set_xlim3d(-10, 10)
-    ax.set_ylim3d(-10, 10)
+    ax.set_xlim3d(-2, 2)
+    ax.set_ylim3d(-2, 2)
     ax.set_zlim3d(0, 20)
     t += dt
 
@@ -107,24 +110,91 @@ def update(i, fig_title, A):
         # (13. of Algorithm 1)
         delta_p = [0 for _ in range(N)]
         for i in range(N):
+    
             rho0 = rho_init[i]
             # formula (12)
             for j in neighbor[i]:
                 if i != j:  # Exclude i==j
-                    delta_p[i] += (lam[i]+lam[j]) * dW_spiky(x_pred[i] - x_pred[j], h) / rho0
+                    # artificial pressure term:
+                    s_corr = -0.1 * (W_poly6(x_pred[i]-x_pred[j],h)/W_poly6(0.001*h,h))**4
+                    s_corr = 0
+                    delta_p[i] += (lam[i]+lam[j] + s_corr) * dW_spiky(x_pred[i] - x_pred[j], h) / rho0
+            # Collision detection between particles:
+            '''
+            for j in neighbor[i]:
+                if i != j:
+                    dist = np.linalg.norm(x_pred[i] - x_pred[j])
+                    if dist <= 0.01: # collision
+                        normal = (x_pred[i] - x_pred[j]) / dist
+                        alpha_i = DAMPING*np.dot(normal.T, v[i])
+                        alpha_j = DAMPING*np.dot(normal.T, v[j])
+                        v[i] -= alpha_i*normal
+                        v[j] -= alpha_j*normal
+            '''
             # Collision detection and respose (14. of algorithm)
             surface_normal = np.asarray([0, 0, 1])  # floor normal
+            wall1_normal = np.asarray([1,0,0])
+            wall3_normal = np.asarray([-1,0,0])
+            wall2_normal = np.asarray([0,1,0])
+            wall4_normal = np.asarray([0,-1,0])
+            ceiling_normal = np.asarray([0,0,-1])
             # Implementation of 3.4 of Position Based Dynamics paper
             # https://www.cs.toronto.edu/~jacobson/seminar/mueller-et-al-2007.pdf
-            if x_pred[i][2] < 0: # collision occurs
-                if x[i][2] > 0:  # if ray x->p enters the floor
-                    q = (x[i] * x[i][2] - x_pred[i] * x_pred[i][2]) / (x[i][2] - x_pred[i][2])
-                else:  # if ray x->p lies completely inside the floor
-                    q = x_pred[i] - surface_normal.dot(x_pred[i]) * surface_normal
+            def compute_collision(dim, normal, x, x_pred,boundary):
+                if (x[dim] > boundary and boundary <= 0) or (x[dim] < boundary and boundary > 0): # if ray x->p enters wall
+                #if (x[dim] > boundary): # if ray x->p enters wall
+                    #q = x_pred
+                    #q[dim] = 0
+                    q = (x * x[dim] - x_pred * x_pred[dim]) / (x[dim] - x_pred[dim]) # computes average in dimension of normal
+                else: # if ray x->p lies completely inside wall
+                    q = x_pred - normal.dot(x_pred) * normal # this will always be 0 in the dimensions that is being corrected ... normal.dot(x_pred) * normal isolates dimension being corrected; x_pred - normal.dot(x_pred) * normal sets dimension being corrected to 0
+                #normal = ()
                 # Formula (7) of PBD paper where C(p) = (p-q) \dot n
-                s = (x_pred[i] - q).dot(surface_normal)
+                s = (x_pred - q).dot(normal) 
+                return s
+            DAMPING=0.01
+            if x_pred[i][2] < 0: # collision occurs on floor
+                #s = compute_collision(2, surface_normal, x[i], x_pred[i],boundary=0)
+                x_pred[i][2] = 0 # prevents it from getting stuck in corners
+                #alpha = np.dot(v[i], surface_normal)
+                #v[i] -= DAMPING*alpha * surface_normal
                 # Formula (6) of PBD paper
-                delta_p[i] -= s * surface_normal
+                #delta_p[i] -= s * surface_normal
+            
+            if x_pred[i][0] < -1: # collision hits wall 1
+                #s = compute_collision(0, wall1_normal, x[i], x_pred[i],boundary=-1)
+                x_pred[i][0] = -1 
+                #alpha = min([0, np.dot(v[i], wall1_normal)])
+                #alpha=np.dot(v[i], wall1_normal)
+                #v[i] -= DAMPING*alpha * wall1_normal
+                #if s > 0.5:
+                 #   print("left wall", s, x[i], x_pred[i])
+                #delta_p[i] -= DAMPING * s * wall1_normal
+            elif x_pred[i][0] > 1: # collision hits wall 3
+                #s = compute_collision(0, wall3_normal, x[i], x_pred[i],boundary=1)
+                x_pred[i][0] = 1 
+                #alpha = min([0, np.dot(v[i], wall3_normal)])
+                #alpha = np.dot(v[i], wall3_normal)
+                #v[i] -= DAMPING*alpha * wall3_normal
+                #if s > 0.5:
+                 #   print("right wall", s, x[i], x_pred[i])
+                #delta_p[i] -= DAMPING*s * wall3_normal
+            if x_pred[i][1] < -1: # collision hits wall 2
+                #s = compute_collision(1, wall2_normal, x[i], x_pred[i],boundary=-2)
+                x_pred[i][1] = -1 
+                #alpha = min([0, np.dot(v[i], wall2_normal)])
+                #alpha = np.dot(v[i], wall2_normal)
+                #v[i] -= DAMPING*alpha * wall2_normal
+                #delta_p[i] -= s * wall2_normal
+            if x_pred[i][1] > 1: # collision hits wall 4
+                #s = compute_collision(1, wall4_normal, x[i], x_pred[i],boundary=2)
+                x_pred[i][1] = 1 
+                #alpha = min([0, np.dot(v[i], wall4_normal)])
+                #alpha = np.dot(v[i], wall4_normal)
+                #v[i] -= DAMPING*alpha * wall4_normal
+                #delta_p[i] -= s * wall4_normal
+            
+
         # update position (17. of the algorithm)
         for i in range(N):
             x_pred[i] += delta_p[i]
@@ -147,6 +217,7 @@ def update(i, fig_title, A):
         N_vort = eta / (np.linalg.norm(eta)+10e-20)
         
         epsilon_vort = 1e-2
+        #epsilon_vort = 0
         vorticity[i] = epsilon*(N_vort * omega_i)
 
         ## VISCOSITY (22. of the algorithm)
@@ -162,8 +233,8 @@ def update(i, fig_title, A):
 
 fig = plt.figure()
 ax = Axes3D(fig)
-ax.set_xlim3d(-10, 10)
-ax.set_ylim3d(-10, 10)
+ax.set_xlim3d(-5, 5)
+ax.set_ylim3d(-5, 5)
 ax.set_zlim3d(0, 20)
 
 ani = anm.FuncAnimation(fig, update, fargs = ('Initial Animation! ', 2.0), interval = 100)
