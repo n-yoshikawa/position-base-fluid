@@ -20,11 +20,27 @@ def dW_spiky(r_vect, h):
     else:
         return 0
 
-N = 100  # Number of particle
+N = 1728 # Number of particle
+N=125
 t = 0    # time
-dt = 0.1 # time step
+dt = 0.01 # time step
+
 # Initial positions and velocities
-x = np.asarray([[0.5*r*np.cos(2.0*np.pi/10.0 * i), 0.5*r*np.sin(2.0*np.pi/10.0 * i), k + 10.0] for i in range(10) for r in range(1, 3) for k in range(5) ])
+#x = np.asarray([[0.5*r*np.cos(2.0*np.pi/10.0 * i), 0.5*r*np.sin(2.0*np.pi/10.0 * i), k + 10.0] for i in range(10) for r in range(1, 3) for k in range(5) ])
+
+dim = int(np.cbrt(N))
+print(dim)
+x = np.asarray([[(i/dim)*2-1, (i/dim)*2-1, (i/dim) + 2] for i in range(dim) for j in range(dim) for k in range(dim)])
+x = np.asarray([(i/dim)-0.2 for i in range(dim)])
+y = np.asarray([(i/dim)-0.2 for i in range(dim)])
+z = np.asarray([0.5*(i/dim)+2 for i in range(dim)])
+X = []
+for x_i in x:
+    for y_i in x:
+        for z_i in z:
+            X.append([x_i,y_i,z_i])
+x = np.array(X)
+print(x.shape)
 v = np.asarray([[0., 0., 0.] for i in range(N)])
 gravity = np.asarray([[0., 0., -10.] for i in range(N)])
 
@@ -40,6 +56,7 @@ for i in range(N):
 h = 100  # Parameter for kernel. I am not sure about the optimal value
 # Calculate the density of the each particle at initial state
 rho_init = [0.0 for _ in range(N)]  
+#rho_init = [8000.0 for _ in range(N)]  
 for i in range(N):
     rho = 0.0
     for j in neighbor[i]:  
@@ -50,15 +67,14 @@ def update(i, fig_title, A):
     global t, x, v, gravity
     if i != 0:
         ax.cla()
-    ax.set_xlim3d(-10, 10)
-    ax.set_ylim3d(-10, 10)
-    ax.set_zlim3d(0, 20)
+    ax.set_xlim3d(-2.2, 2.2)
+    ax.set_ylim3d(-2.2, 2.2)
+    ax.set_zlim3d(0, 3)
     t += dt
 
     print("t = {:.2}".format(t))
 
     x, v = pbf.step(x, v, gravity, rho_init, dt)
-
     ax.scatter(x[:, 0], x[:, 1], x[:, 2], color='red')
 
 fig = plt.figure()

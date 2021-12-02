@@ -1,3 +1,4 @@
+
 #include <iostream>
 
 #include <vector>
@@ -8,7 +9,7 @@
 #include <pybind11/numpy.h>
 
 #include <pybind11/eigen.h>
-#include <Eigen/Dense>
+#include <eigen3/Eigen/Dense>
 
 namespace py = pybind11;
 
@@ -95,12 +96,21 @@ std::tuple<RowMatrixXd, RowMatrixXd> step(Eigen::Ref<const RowMatrixXd> x,
                     Z += std::pow(grad.norm(), 2.0);
                 }
             }
-            lam[i] = C / (Z + 1e-5);
+            lam[i] = C / (Z + 1e-5); // figure out why this gives better results
         }
         // calculate delta p_i
         RowMatrixXd delta_p(N, 3);
-        VectorXd surface_normal(3);
-        surface_normal << 0, 0, 1;
+        VectorXd floor_normal(3), LW_normal(3), FW_normal(3), RW_normal(3), BW_normal(3);
+        floor_normal << 0, 0, 1;
+        LW_normal << 1, 0, 0;
+        RW_normal << -1, 0, 0;
+        FW_normal << 0, 1, 0;
+        BW_normal << 0, -1, 0;
+	double floor = 0;
+        double LW = -1; 
+        double RW = -1 * LW;
+	double FW = LW;
+	double BW = -1 * FW;
 
         for (int i=0; i<N; i++) {
             delta_p.row(i) = VectorXd::Zero(3);
@@ -108,21 +118,32 @@ std::tuple<RowMatrixXd, RowMatrixXd> step(Eigen::Ref<const RowMatrixXd> x,
             for (int j : neighbor[i]) {
                 if (i != j) {
                     VectorXd r = p.row(i) - p.row(j);
-                    delta_p.row(i) += (lam[i]+lam[j]) * dW_spiky(r, h) / rho0;
+		    VectorXd corr(3); 
+		    corr << 0.00001*h, 0.00001*h, 0.00001*h;
+		    //double s_corr = -0.1 * std::pow(W_poly6(r, h) / W_poly6(corr, h),4);
+                    double s_corr = 0;
+		    delta_p.row(i) += (lam[i]+lam[j] + s_corr) * dW_spiky(r, h) / rho0;
                 }
             }
-            if (p(i, 2) < 0) {
-                VectorXd p_i= p.row(i);
-                VectorXd x_i= x.row(i);
-                VectorXd q;
-                if (x(i, 2) > 0) {
-                    q = (x_i * x(i, 2) - p_i * p(i, 2)) / (x(i, 2) - p(i, 2));
-                } else {
-                    q = p_i - surface_normal.dot(p_i) * surface_normal;
-                }
-                double s = (p_i - q).dot(surface_normal);
-                delta_p.row(i) -= s * surface_normal;
-            }
+            
+	    if (p(i, 2) < floor) {
+		double s = floor_normal.dot(p.row(i));
+                delta_p.row(i) -= s * floor_normal;
+	    } 
+	    
+	    if (p(i,0) < LW){
+                delta_p.row(i) -= LW_normal.dot(p.row(i)) * LW_normal;
+	        
+	    } 
+	    if  (p(i,0) > RW){
+	        delta_p.row(i) -= RW_normal.dot(p.row(i)) * RW_normal;
+	    } 
+	    if (p(i,1) < FW){
+	        delta_p.row(i) -= FW_normal.dot(p.row(i)) * FW_normal;
+	    } 
+	    if (p(i,1) > BW){
+	        delta_p.row(i) -= BW_normal.dot(p.row(i)) * BW_normal;
+	    }
         }
 
         for (int i=0; i<N; i++) {
