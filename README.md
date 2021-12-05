@@ -36,4 +36,4 @@ Blender rendering requires `positions.npy` which contains a numpy array whose sh
 - [Rendered by matplotlib](https://streamable.com/zm1kml)
 - [Rendered by Blender](https://streamable.com/4ni7qn)
 
-<div style="width:100%;height:0px;position:relative;padding-bottom:56.250%;"><iframe src="https://streamable.com/e/4ni7qn" frameborder="0" width="100%" height="100%" allowfullscreen style="width:100%;height:100%;position:absolute;left:0px;top:0px;overflow:hidden;"></iframe></div>
+https://user-images.githubusercontent.com/29328746/144767662-7a69017e-4ec9-4998-9833-4a49e598606a.mp4
