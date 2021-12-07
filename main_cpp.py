@@ -6,75 +6,52 @@ import numpy as np
 import pbf
 
 
-def W_poly6(r_vect, h):
-    r = np.linalg.norm(r_vect)
-    if r <= h:
-        return 315.0/(64.0 * np.pi * h**9.0) * (h**2.0 - r**2.0)**3.0
-    else:
-        return 0
-
-def dW_spiky(r_vect, h):
-    r = np.linalg.norm(r_vect)
-    if r <= h:
-        return 45.0/(np.pi * h**6.0) * (h - r)**2.0 * (r_vect / r)
-    else:
-        return 0
-
 N = 1728 # Number of particle
-N=125
+#N=125
+#N = 64
 t = 0    # time
-dt = 0.01 # time step
+dt = 0.005 # time step
 
 # Initial positions and velocities
-#x = np.asarray([[0.5*r*np.cos(2.0*np.pi/10.0 * i), 0.5*r*np.sin(2.0*np.pi/10.0 * i), k + 10.0] for i in range(10) for r in range(1, 3) for k in range(5) ])
 
 dim = int(np.cbrt(N))
-print(dim)
-x = np.asarray([[(i/dim)*2-1, (i/dim)*2-1, (i/dim) + 2] for i in range(dim) for j in range(dim) for k in range(dim)])
-x = np.asarray([(i/dim)-0.2 for i in range(dim)])
-y = np.asarray([(i/dim)-0.2 for i in range(dim)])
-z = np.asarray([0.5*(i/dim)+2 for i in range(dim)])
+x = np.asarray([(i/dim/2)-0.25 for i in range(dim)])
+y = np.asarray([(i/dim/2)-0.25 for i in range(dim)])
+z = np.asarray([(i/dim/4)+0.5 for i in range(dim)])
 X = []
 for x_i in x:
     for y_i in x:
         for z_i in z:
             X.append([x_i,y_i,z_i])
+
 x = np.array(X)
-print(x.shape)
 v = np.asarray([[0., 0., 0.] for i in range(N)])
 gravity = np.asarray([[0., 0., -10.] for i in range(N)])
 
 # Calculate initial density
-# find neighboring particles
-# Counting 8 neighbors is standard acoording to the prof
-neighbor = []
-for i in range(N):
-    distance = np.asarray([np.linalg.norm(x[i] - x[j]) for j in range(N)])
-    neighbor.append(list(distance.argsort()[:8]))
-
-
-h = 100  # Parameter for kernel. I am not sure about the optimal value
+boundary=0.5
+epsilon=5000
 # Calculate the density of the each particle at initial state
-rho_init = [0.0 for _ in range(N)]  
-#rho_init = [8000.0 for _ in range(N)]  
-for i in range(N):
-    rho = 0.0
-    for j in neighbor[i]:  
-        rho_init[i] += W_poly6(x[i] - x[j], h)
-
-
+rho_init = [8500 for _ in range(N)]
+hit_bottom = False
+min_height_stack = np.min(z)
 def update(i, fig_title, A):
-    global t, x, v, gravity
+    global t, x, v, gravity, hit_bottom
     if i != 0:
         ax.cla()
-    ax.set_xlim3d(-2.2, 2.2)
-    ax.set_ylim3d(-2.2, 2.2)
-    ax.set_zlim3d(0, 3)
+    ax.set_xlim3d(-0.5, 0.5)
+    ax.set_ylim3d(-0.5, 0.5)
+    ax.set_zlim3d(0, 1)
     t += dt
 
     print("t = {:.2}".format(t))
-
-    x, v = pbf.step(x, v, gravity, rho_init, dt)
+    # change value of h for visual purposes:
+    if hit_bottom or (not hit_bottom and np.min(x[:,2]) < 0.00001):
+        h = 0.1
+        hit_bottom = True
+    elif not hit_bottom:
+        h = 100000
+    x, v = pbf.step(x, v, gravity, rho_init, dt, h, boundary, epsilon)
     ax.scatter(x[:, 0], x[:, 1], x[:, 2], color='red')
 
 fig = plt.figure()
