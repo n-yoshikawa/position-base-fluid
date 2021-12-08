@@ -60,7 +60,7 @@ std::tuple<RowMatrixXd, RowMatrixXd> step(Eigen::Ref<const RowMatrixXd> x,
         Eigen::Ref<const VectorXd> rho_init,
         double dt,
         double h, 
-        double boundary,
+        Eigen::Ref<const VectorXd> boundary, // Left, Right, Up, Down
         double epsilon) {
     RowMatrixXd v = v0 + force * dt;
     RowMatrixXd p = x + v * dt;
@@ -140,13 +140,24 @@ std::tuple<RowMatrixXd, RowMatrixXd> step(Eigen::Ref<const RowMatrixXd> x,
         }
 
         for (int i=0; i<N; i++) {
-            p.row(i) += delta_p.row(i);
-            // collision detection: clip particle positions to boundary walls
-            p(i, 0) = clip(p(i, 0), -1*boundary, boundary);
-            p(i, 1) = clip(p(i, 1), -1*boundary, boundary);
-            if (p(i, 2) < 0){ // TO DO: implement ceiling
-                p(i,2) = 0;
+            // lazy implemantation of collision response
+            double alpha = 0.2;
+            if (p(i, 0) < boundary(0)) {
+                delta_p(i, 0) += alpha * (boundary(0) - p(i, 0));
             }
+            if (p(i, 0) > boundary(1)) {
+                delta_p(i, 0) += alpha * (boundary(1) - p(i, 0));
+            }
+            if (p(i, 1) < boundary(2)) {
+                delta_p(i, 1) += alpha * (boundary(2) - p(i, 1));
+            }
+            if (p(i, 1) > boundary(3)) {
+                delta_p(i, 1) += alpha * (boundary(3) - p(i, 1));
+            }
+            if (p(i, 2) < 0){
+                delta_p(i, 2) += alpha * (-p(i, 2));
+            }
+            p.row(i) += delta_p.row(i);
         }
     }
 
