@@ -46,7 +46,7 @@ VectorXd dW_spiky(Eigen::Ref<const VectorXd> r, double h) {
     double r_norm = r.norm();
     double c = 0.0;
     
-    if (r_norm <= 0.000001) { // stability issues with small values of r_norm
+    if (r_norm <= 0.000001) { // stability issues with small values of r_nor
         c = 0.0;
     } else if (r_norm <= h) {
         c = -(45.0 / (M_PI * std::pow(h, 6.0))) * std::pow(h - r_norm, 2.0) / r_norm;
@@ -154,7 +154,7 @@ std::tuple<RowMatrixXd, RowMatrixXd> step(Eigen::Ref<const RowMatrixXd> x,
         v.row(i) = (p.row(i) - x.row(i)) / dt;
     }
     
-    for (int i=0; i<N; i++) {
+    /*for (int i=0; i<N; i++) {
 	// VORTICITY
 	VectorXd omega_i = VectorXd::Zero(3);
         for (int j : neighbor[i]) {
@@ -186,7 +186,7 @@ std::tuple<RowMatrixXd, RowMatrixXd> step(Eigen::Ref<const RowMatrixXd> x,
 
 	v.row(i) += viscosity;
         v.row(i) += dt * f_vort;
-    }
+    }*/
 
     return std::make_tuple(p, v);
 }

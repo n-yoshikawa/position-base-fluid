@@ -21,7 +21,7 @@ pip install pybind11
 
 ### Compile
 ```
-c++ -O3 -Wall -shared -std=c++11 -fPIC $(python3 -m pybind11 --includes) -I/usr/include/eigen3/ example.cpp -o example$(python3-config --extension-suffix)
+c++ -O3 -Wall -shared -std=c++11 -fPIC $(python3 -m pybind11 --includes) -I/usr/include/eigen3/ pbf.cpp -o pbf$(python3-config --extension-suffix)
 ```
 
 ### Run
@@ -34,6 +34,4 @@ Blender rendering requires `positions.npy` which contains a numpy array whose sh
 
 # Video
 - [Rendered by matplotlib](https://streamable.com/zm1kml)
-- [Rendered by Blender](https://streamable.com/4ni7qn)
-
-https://user-images.githubusercontent.com/29328746/144770196-4715360b-2352-4fde-8f80-6f6d286fee4b.mp4
+- [Rendered by Blender](https://streamable.com/b3sieg)
