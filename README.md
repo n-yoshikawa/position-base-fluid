@@ -25,35 +25,35 @@ We solved it by replacing `# include <Eigen/Core>` with `# include <eigen3/Eigen
 ### Run Fluid Simulation
 
 The main script for running the simulation is:
-`python3 main.py`
-
+```
+python3 main.py
+```
 You can run it as is, but there are also a number of flags you can enter to change different parameters. These parameters are listed below and can also be listed by running `python3 main.py --help`
 
 `--particles` : number of particles to run (our graphics are only scaled to 1000 or 8000 at this point; default is 1000 particles)\
-`--pressure` : turns on articifial pressure kernel  
-`--vorticity` : turns on vorticity parameter
-`--viscosity` : turns on viscosity parameter 
-`--wave` : move the wall in the `x`-dimension to generate waves
-`--side_view` : visualize the simulation from a side-view instead of bird's-eye view 
-`--save_pos` : saves the particle positions for each timestep to a NumPy array called `positions.npy`, where the array has the following dimensions: `(timestep, num_particles, 3)`; this is useful for Blender renderings and isosurface generation
+`--pressure` : turns on articifial pressure kernel\  
+`--vorticity` : turns on vorticity parameter\
+`--viscosity` : turns on viscosity parameter \
+`--wave` : move the wall in the `x`-dimension to generate waves\
+`--side_view` : visualize the simulation from a side-view instead of bird's-eye view \
+`--save_pos` : saves the particle positions for each timestep to a NumPy array called `positions.npy`, where the array has the following dimensions: `(timestep, num_particles, 3)`; this is useful for Blender renderings and isosurface generation\
 
-For example, to run a simulation for 8000 particles with the pressure kernel and vorticity, you would run:
-
+For example, to run a simulation for 8000 particles with the pressure kernel and vorticity, you would run 
 `python3 main.py --particles 8000 --pressure --vorticity`
 
 ### Generate Surface Mesh using Marching Cubes
 
 To generate an isosurface for the particles at each timestep, you can run the following script:
 
-`python3 marching_cubes.py`
+```
+python3 marching_cubes.py
+```
+By default, it will take in a NumPy array called `positions.npy` and divide the cube into a 30x30x30 grid, but you can change this using the following command-line arguments: \
 
-By default, it will take in a NumPy array called `positions.npy` and divide the cube into a 30x30x30 grid, but you can change this using the following command-line arguments:
-
-`--bins` : number of bins in each dimension (default is 30)
-`--path` : path to NumPy array 
+`--bins` : number of bins in each dimension (default is 30)\
+`--path` : path to NumPy array \
 
 ```
-
 # Video
 - [Rendered by matplotlib](https://streamable.com/zm1kml)
 - [Rendered by Blender](https://streamable.com/b3sieg)
