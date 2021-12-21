@@ -39,8 +39,8 @@ You can run it as is, but there are also a number of flags you can enter to chan
 `--side_view` : visualize the simulation from a side-view instead of bird's-eye view \
 `--save_pos` : saves the particle positions for each timestep to a NumPy array called `positions.npy`, where the array has the following dimensions: `(timestep, num_particles, 3)`; this is useful for Blender renderings and isosurface generation\
 
-For example, to run a simulation for 8000 particles with the pressure kernel and vorticity, you would run 
-`python3 main.py --particles 8000 --pressure --vorticity`
+For example, to run a simulation for 1000 particles with the pressure kernel and vorticity, you would run 
+`python3 main.py --pressure --vorticity`
 
 ### Generate Surface Meshes using Marching Cubes
 
