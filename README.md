@@ -1,7 +1,8 @@
 # Position Based Fluid
-Final project for Physics Based Animation
+Final project for CSC2549: Physics-Based Animation\
+University of Toronto, December 2021
 
-## Requirement
+## Requirements
 
 - numpy
 - matplotlib
@@ -18,7 +19,7 @@ Note that on MacOSX we had some issues with the compilation. This command worked
 c++ -O3 -Wall -shared -std=c++11 -fPIC -Wl,-undefined,dynamic_lookup $(python3 -m pybind11 --includes) -I/usr/include/Eigen/ pbf.cpp -o pbf$(python3-config --extension-suffix)
 ```
 If you are on MacOSX, you might also see this error: 
-`/usr/local/lib/python3.8/site-packages/pybind11/include/pybind11/eigen.h:30:10: fatal error: 'Eigen/Core' file not found #include <Eigen/Core>`
+`/usr/local/lib/python3.8/site-packages/pybind11/include/pybind11/eigen.h:30:10: fatal error: 'Eigen/Core' file not found #include <Eigen/Core>`\
 We solved it by replacing `# include <Eigen/Core>` with `# include <eigen3/Eigen/Core>` in the `eigen.h` file.
 
 
@@ -41,7 +42,7 @@ You can run it as is, but there are also a number of flags you can enter to chan
 For example, to run a simulation for 8000 particles with the pressure kernel and vorticity, you would run 
 `python3 main.py --particles 8000 --pressure --vorticity`
 
-### Generate Surface Mesh using Marching Cubes
+### Generate Surface Meshes using Marching Cubes
 
 To generate an isosurface for the particles at each timestep, you can run the following script:
 
