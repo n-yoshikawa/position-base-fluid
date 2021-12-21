@@ -27,10 +27,10 @@ def init_params():
         y = np.linspace(-0.25, 0.25, num=dim)
         z = np.linspace(0.0, 0.5, num=dim)
     elif args.particles == 8000:
-        dim = 12
-        x = np.linspace(-0.25, 0.25, num=dim)
-        y = np.linspace(-0.25, 0.25, num=dim)
-        z = np.linspace(0.0, 0.5, num=dim)
+        dim = 20
+        x = np.linspace(-0.25*2, 0.25*2, num=dim)
+        y = np.linspace(-0.25*2, 0.25*2, num=dim)
+        z = np.linspace(0.05*2, 0.55*2, num=dim)
 
     X = []
     for x_i in x:
@@ -92,7 +92,6 @@ def main():
     parser.add_argument('--side_view', action='store_true', help="change perspective of graph from bird's-eye view to side view")
     parser.add_argument('--particles', type=int, help='number of particles to simulate (1000 or 8000) --> default=1000', default=1000)
     parser.add_argument('--save_pos', action='store_true', help='save positions to numpy array called `positions.npy` --> can be used later for Blender renderings (note: will not show graph in order to run faster)')
-
     global args, ax
     args = parser.parse_args()
     assert args.particles in [1000, 8000], "Our system is only optimized for 1000 or 8000 particles"
