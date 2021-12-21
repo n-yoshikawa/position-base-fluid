@@ -58,5 +58,8 @@ This will save `.obj` files in a folder called `marching_cubes_bin{binDim}_{num_
 
 ```
 # Video
-- [Rendered by matplotlib](https://streamable.com/zm1kml)
-- [Rendered by Blender](https://streamable.com/b3sieg)
+- [Rendered by matplotlib] (https://streamable.com/zm1kml)
+- [1000 particles rendered by Blender] (https://streamable.com/b3sieg)
+- [8000 particles rendered by Blender] (https://streamable.com/8q3pkf)
+- [Mesh extracted using Marching Cubes] (https://streamable.com/gj5mix)
+- [Mesh rendered by Blender Procedural Textures] (https://streamable.com/wu6xyc)
