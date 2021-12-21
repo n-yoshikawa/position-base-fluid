@@ -32,7 +32,7 @@ python3 main.py
 You can run it as is, but there are also a number of flags you can enter to change different parameters. These parameters are listed below and can also be listed by running `python3 main.py --help`
 
 `--particles` : number of particles to run (our graphics are only scaled to 1000 or 8000 at this point; default is 1000 particles)\
-`--pressure` : turns on articifial pressure kernel\  
+`--pressure` : turns on articifial pressure kernel \  
 `--vorticity` : turns on vorticity parameter\
 `--viscosity` : turns on viscosity parameter \
 `--wave` : move the wall in the `x`-dimension to generate waves\
@@ -49,10 +49,12 @@ To generate an isosurface for the particles at each timestep, you can run the fo
 ```
 python3 marching_cubes.py
 ```
-By default, it will take in a NumPy array called `positions.npy` and divide the cube into a 30x30x30 grid, but you can change this using the following command-line arguments: \
+By default, it will take in a NumPy array called `positions.npy` and divide the cube into a 30x30x30 grid, but you can change this using the following command-line arguments: 
 
 `--bins` : number of bins in each dimension (default is 30)\
 `--path` : path to NumPy array \
+
+This will save `.obj` files in a folder called `marching_cubes_bin{binDim}_{num_particles}p_padded` in the current working directory.
 
 ```
 # Video
