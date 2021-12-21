@@ -60,8 +60,11 @@ std::tuple<RowMatrixXd, RowMatrixXd> step(Eigen::Ref<const RowMatrixXd> x,
         Eigen::Ref<const VectorXd> rho_init,
         double dt,
         double h, 
-        Eigen::Ref<const VectorXd> boundary, // Left, Right, Up, Down
-        double epsilon) {
+        Eigen::Ref<const VectorXd> boundary, // Left, Right, Up, Down, Ceiling
+        double epsilon,
+	bool incl_pressure,
+	bool incl_vorticity,
+	bool incl_viscosity) {
     RowMatrixXd v = v0 + force * dt;
     RowMatrixXd p = x + v * dt;
 
@@ -132,8 +135,10 @@ std::tuple<RowMatrixXd, RowMatrixXd> step(Eigen::Ref<const RowMatrixXd> x,
                     VectorXd r = p.row(i) - p.row(j);
                     VectorXd corr(3); 
                     corr << 0.1*h, 0.1*h, 0.1*h;
-                    double s_corr = -0.0001 * std::pow(W_poly6(r, h) / W_poly6(corr, h),4);
-                    //double s_corr = 0;
+		    double s_corr = 0;
+		    if (incl_pressure){
+                        s_corr = -0.001 * std::pow(W_poly6(r, h) / W_poly6(corr, h),4);
+		    } 
                     delta_p.row(i) += (lam[i]+lam[j] + s_corr) * dW_spiky(r, h) / rho0;
                 }
             }
@@ -157,6 +162,10 @@ std::tuple<RowMatrixXd, RowMatrixXd> step(Eigen::Ref<const RowMatrixXd> x,
             if (p(i, 2) < 0){
                 delta_p(i, 2) += alpha * (-p(i, 2));
             }
+
+	    if (p(i, 0) > boundary(4)){
+	        delta_p(i, 0) += alpha * (boundary(4)-p(i, 0));
+	    }
             p.row(i) += delta_p.row(i);
         }
     }
@@ -165,39 +174,43 @@ std::tuple<RowMatrixXd, RowMatrixXd> step(Eigen::Ref<const RowMatrixXd> x,
         v.row(i) = (p.row(i) - x.row(i)) / dt;
     }
 
-    /*for (int i=0; i<N; i++) {
+    for (int i=0; i<N; i++) {
     // VORTICITY
-    VectorXd omega_i = VectorXd::Zero(3);
-    for (int j : neighbor[i]) {
-    if (i != j){
-    VectorXd v_ij = v.row(j) - v.row(i);
-    VectorXd grad = dW_spiky(p.row(i)-p.row(j), h);
-    omega_i += cross_prod(v_ij, grad);
+        VectorXd omega_i = VectorXd::Zero(3);
+        for (int j : neighbor[i]) {
+        if (i != j){
+            VectorXd v_ij = v.row(j) - v.row(i);
+            VectorXd grad = dW_spiky(p.row(i)-p.row(j), h);
+            omega_i += cross_prod(v_ij, grad);
+            }
+        }
+
+        VectorXd eta = VectorXd::Zero(3);
+        for (int j : neighbor[i]) {
+            eta += dW_spiky(p.row(i)-p.row(j), h) * omega_i.norm();
+        }
+        // added small constant in case denominator = 0 (source: https://www.cs.ubc.ca/~rbridson/fluidsimulation/fluids_notes.pdf section 5.1)
+        VectorXd N_vort = eta / (eta.norm() + 10e-20);
+
+        double epsilon_vort = 0.0001;
+        VectorXd f_vort = epsilon_vort * cross_prod(N_vort, omega_i); 
+
+
+        // VISCOSITY 
+        VectorXd viscosity = VectorXd::Zero(3);
+        double c = 0.0001;
+        for (int j : neighbor[i]) {
+            viscosity +=(v.row(j) - v.row(i)) * W_poly6(p.row(i) - p.row(j), h);
+        }	
+        viscosity = c * viscosity;
+        
+	if (incl_viscosity){
+	    v.row(i) += viscosity;
+	}
+        if (incl_vorticity){
+	    v.row(i) += dt * f_vort;
+	}
     }
-    }
-
-    VectorXd eta = VectorXd::Zero(3);
-    for (int j : neighbor[i]) {
-    eta += dW_spiky(p.row(i)-p.row(j), h) * omega_i.norm();
-    }
-    // added small constant in case denominator = 0 (source: https://www.cs.ubc.ca/~rbridson/fluidsimulation/fluids_notes.pdf section 5.1)
-    VectorXd N_vort = eta / (eta.norm() + 10e-20);
-
-    double epsilon_vort = 2/1000;
-    VectorXd f_vort = epsilon_vort * cross_prod(N_vort, omega_i); 
-
-
-    // VISCOSITY 
-    VectorXd viscosity = VectorXd::Zero(3);
-    double c = 0.01;
-    for (int j : neighbor[i]) {
-    viscosity +=(v.row(j) - v.row(i)) * W_poly6(p.row(i) - p.row(j), h);
-    }	
-    viscosity = c * viscosity;
-
-    v.row(i) += viscosity;
-    v.row(i) += dt * f_vort;
-    }*/
 
     return std::make_tuple(p, v);
 }
