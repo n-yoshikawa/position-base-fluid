@@ -29,7 +29,7 @@ The main script for running the simulation is:
 
 You can run it as is, but there are also a number of flags you can enter to change different parameters. These parameters are listed below and can also be listed by running `python3 main.py --help`
 
-`--particles` : number of particles to run (our graphics are only scaled to 1000 or 8000 at this point; default is 1000 particles)
+`--particles` : number of particles to run (our graphics are only scaled to 1000 or 8000 at this point; default is 1000 particles)\
 `--pressure` : turns on articifial pressure kernel  
 `--vorticity` : turns on vorticity parameter
 `--viscosity` : turns on viscosity parameter 
